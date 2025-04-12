@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: admin
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 5                                        # จำนวน connection ที่ idle (ไม่ได้ใช้งาน)
+      maximum-pool-size: 10                                  # จำนวนสูงสุดของ connection pool
+      idle-timeout: 300000                                   # เวลาที่ connection จะ idle ก่อนจะถูกปิด
+      max-lifetime: 1800000                                  # เวลาหมดอายุสูงสุดของ connection
+      connection-timeout: 30000
+      auto-commit: false
+      connection-test-query: SELECT 1                         # ทดสอบการเชื่อมต่อ
+      isolation-level: TRANSACTION_READ_COMMITTED             # ระดับ Isolation
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+cors:
+  allowed-origins:
+    - http://localhost:3000
