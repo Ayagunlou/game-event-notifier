@@ -20,14 +20,11 @@ public class Token {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "access_token", nullable = false, length = 512)
-    private String accessToken;
-
     @Column(name = "refresh_token", nullable = false, length = 512)
     private String refreshToken;
 
     @ManyToOne
-    @JoinColumn(name = "key_id", nullable = false)
+    @JoinColumn(name = "key_id")
     private KeyPair keyPair;
 
     @Column(name = "platform", length = 64)

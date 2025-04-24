@@ -2,24 +2,36 @@ package api.game_event_notifier.service.role;
 
 import api.game_event_notifier.model.entity.*;
 import api.game_event_notifier.model.request.*;
-import api.game_event_notifier.repository.*;
+import api.game_event_notifier.service.repository.ServiceRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.time.LocalDateTime;
 
 @Service
 public class CreateRoleService {
 
-    private final RoleRepository _roleRepository;
+    private final ServiceRepository _serviceRepository;
+    private final PlatformTransactionManager _transactionManager;
 
-    public CreateRoleService(RoleRepository roleRepository) {
-        this._roleRepository = roleRepository;
+    public CreateRoleService(ServiceRepository serviceRepository, PlatformTransactionManager transactionManager) {
+        this._serviceRepository = serviceRepository;
+        this._transactionManager = transactionManager;
     }
 
     public Role createRole(RoleRequestModel requestModel) {
+
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        def.setName("CreateRowTx"); //ชื่อมีประโยชน์ตอน Debug หรือ Log — เวลาอยากรู้ว่า transaction ไหนกำลังทำงานอยู่
+        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+
+        TransactionStatus status = _transactionManager.getTransaction(def);
         try
         {
-            var existRole = _roleRepository.findByRoleName(requestModel.getRoleName());
+            var existRole = _serviceRepository.getRole().findByRoleName(requestModel.getRoleName());
             if (existRole == null)
             {
                 var role = new Role();
@@ -28,7 +40,9 @@ public class CreateRoleService {
                 role.setCreatedAt(LocalDateTime.now());
                 role.setUpdatedAt(LocalDateTime.now());
 
-                _roleRepository.save(role);
+                _serviceRepository.getRole().save(role);
+
+                _transactionManager.commit(status);
 
                 return role;
             }
@@ -39,7 +53,8 @@ public class CreateRoleService {
         }
         catch (Exception ex)
         {
-            return null;
+            _transactionManager.rollback(status);
+            throw new RuntimeException("Create Role Fail. ");
         }
     }
 }

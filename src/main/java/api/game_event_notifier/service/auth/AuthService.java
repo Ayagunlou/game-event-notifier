@@ -2,8 +2,8 @@ package api.game_event_notifier.service.auth;
 
 import api.game_event_notifier.model.reponse.*;
 import api.game_event_notifier.model.request.*;
-import api.game_event_notifier.repository.UserRepository;
 import api.game_event_notifier.security.SecurityService;
+import api.game_event_notifier.service.repository.ServiceRepository;
 import api.game_event_notifier.util.JwtUtil;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.Cookie;
@@ -13,16 +13,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
-    private final UserRepository _userRepository;
     private final SecurityService _securityService;
+    private final ServiceRepository _serviceRepository;
 
-    public AuthService(UserRepository userRepository, SecurityService securityService) {
-        this._userRepository = userRepository;
+    public AuthService(SecurityService securityService, ServiceRepository serviceRepository) {
         this._securityService = securityService;
+        this._serviceRepository = serviceRepository;
     }
 
     public AuthResponseModel authenticate(LoginRequestModel request) {
-        var user = _userRepository.findByUsername(request.getUsername());
+        var user = _serviceRepository.getUser().findByUsername(request.getUsername());
 
         if (user == null){
             throw new RuntimeException("Invalid username or password");

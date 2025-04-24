@@ -3,7 +3,6 @@ package api.game_event_notifier.controller;
 import api.game_event_notifier.model.entity.*;
 import api.game_event_notifier.model.reponse.*;
 import api.game_event_notifier.model.request.*;
-import api.game_event_notifier.repository.UserRepository;
 import api.game_event_notifier.service.auth.*;
 import api.game_event_notifier.service.user.*;
 import jakarta.servlet.http.Cookie;
@@ -64,12 +63,12 @@ public class LoginController {
     }
 
     @PostMapping("/create")
-    public UserResponseModel createUser(@RequestBody LoginRequestModel loginRequestModel) {
+    public UserResponseModel CreateUser(@RequestBody LoginRequestModel loginRequestModel) {
         return _createUserService.createUser(loginRequestModel);
     }
 
     @PostMapping("/refresh-token")
-    public AuthResponseModel refreshToken(HttpServletRequest request) {
+    public AuthResponseModel RefreshToken(HttpServletRequest request) {
         return _authServiceService.RefreshAccessToken(request);
     }
 }

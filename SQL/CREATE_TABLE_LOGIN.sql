@@ -37,9 +37,8 @@ CREATE TABLE users (
 CREATE TABLE tokens (
     token_id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    access_token VARCHAR(512) NOT NULL,
     refresh_token VARCHAR(512) NOT NULL,
-    key_id VARCHAR(64) NOT NULL,                           -- อ้างอิงถึง key ที่ใช้เซ็น JWT
+    key_id VARCHAR(64),                                    -- อ้างอิงถึง key ที่ใช้เซ็น JWT
     platform VARCHAR(64),                                  -- อุปกรณ์ เช่น android, ios, web
     device_id VARCHAR(128),                                -- รหัสอุปกรณ์ (เฉพาะ mobile)
     created_at TIMESTAMP NOT NULL,

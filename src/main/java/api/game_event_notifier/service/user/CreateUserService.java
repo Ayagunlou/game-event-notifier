@@ -3,8 +3,8 @@ package api.game_event_notifier.service.user;
 import api.game_event_notifier.model.entity.*;
 import api.game_event_notifier.model.reponse.*;
 import api.game_event_notifier.model.request.*;
-import api.game_event_notifier.repository.*;
 import api.game_event_notifier.security.SecurityService;
+import api.game_event_notifier.service.repository.ServiceRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -12,23 +12,21 @@ import java.time.LocalDateTime;
 @Service
 public class CreateUserService {
 
-    private final UserRepository _userRepository;
-    private final RoleRepository _roleRepository;
+    private final ServiceRepository _serviceRepository;
     private final SecurityService _securityService;
 
-    public CreateUserService(UserRepository userRepository, RoleRepository roleRepository, SecurityService securityService) {
-        this._userRepository = userRepository;
-        this._roleRepository = roleRepository;
+    public CreateUserService(ServiceRepository serviceRepository, SecurityService securityService) {
+        this._serviceRepository = serviceRepository;
         this._securityService = securityService;
     }
 
     public UserResponseModel createUser(LoginRequestModel newUser) {
         try
         {
-            var existUser = _userRepository.findByUsername(newUser.getUsername());
+            var existUser = _serviceRepository.getUser().findByUsername(newUser.getUsername());
             if (existUser == null)
             {
-                var role = _roleRepository.findFirstByOrderByRoleIdAsc();
+                var role = _serviceRepository.getRole().findFirstByOrderByRoleIdAsc();
 
                 if (role == null){
                     throw new RuntimeException("Role is Empty");
@@ -46,13 +44,13 @@ public class CreateUserService {
                 user.setCreatedAt(LocalDateTime.now());
                 user.setUpdatedAt(LocalDateTime.now());
 
-                _userRepository.save(user);
+                _serviceRepository.getUser().save(user);
 
                 return new UserResponseModel(user.getUsername(), user.getEmail());
             }
             else
             {
-                return new UserResponseModel(existUser.getUsername(), existUser.getEmail());
+                throw new RuntimeException("User Already. ");
             }
         }
         catch (Exception ex)

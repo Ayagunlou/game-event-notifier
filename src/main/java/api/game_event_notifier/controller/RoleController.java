@@ -3,8 +3,6 @@ package api.game_event_notifier.controller;
 import api.game_event_notifier.model.entity.*;
 import api.game_event_notifier.model.request.*;
 import api.game_event_notifier.service.role.CreateRoleService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,7 +16,7 @@ public class RoleController {
     }
 
     @PostMapping("/create")
-    public Role login(@RequestBody RoleRequestModel roleRequestModel) {
+    public Role CreateRole(@RequestBody RoleRequestModel roleRequestModel) {
         return _createRoleService.createRole(roleRequestModel);
     }
 }
