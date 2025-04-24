@@ -1,57 +1,63 @@
 package api.game_event_notifier.service.user;
 
-import api.game_event_notifier.model.entity.SysUser;
-import api.game_event_notifier.model.request.LoginRequestModel;
-import api.game_event_notifier.repository.SysUserRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import api.game_event_notifier.model.entity.*;
+import api.game_event_notifier.model.reponse.*;
+import api.game_event_notifier.model.request.*;
+import api.game_event_notifier.repository.*;
+import api.game_event_notifier.security.SecurityService;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.Base64;
 
 @Service
 public class CreateUserService {
 
-    private final SysUserRepository _userRepository;
+    private final UserRepository _userRepository;
+    private final RoleRepository _roleRepository;
+    private final SecurityService _securityService;
 
-    public CreateUserService(SysUserRepository userRepository) {
+    public CreateUserService(UserRepository userRepository, RoleRepository roleRepository, SecurityService securityService) {
         this._userRepository = userRepository;
+        this._roleRepository = roleRepository;
+        this._securityService = securityService;
     }
 
-    public SysUser createUser(LoginRequestModel newUser) {
+    public UserResponseModel createUser(LoginRequestModel newUser) {
         try
         {
             var existUser = _userRepository.findByUsername(newUser.getUsername());
             if (existUser == null)
             {
-                String hashedPassword = new BCryptPasswordEncoder().encode(newUser.getPassword());
-                var user = new SysUser();
+                var role = _roleRepository.findFirstByOrderByRoleIdAsc();
+
+                if (role == null){
+                    throw new RuntimeException("Role is Empty");
+                }
+
+                String hashedPassword = _securityService.encrypt(newUser.getPassword());
+
+                var user = new User();
                 user.setUsername(newUser.getUsername());
-                user.setPassword(hashedPassword);
-                user.setSalt(generateSalt());
-                user.setCreateDate(LocalDateTime.now());
-                user.setUpdateDate(LocalDateTime.now());
-                return _userRepository.save(user);
+                user.setEmail(newUser.getEmail());
+                user.setPasswordHash(hashedPassword);
+                user.setIsActive(true);
+                user.setIsVerified(false);
+                user.setRole(role);
+                user.setCreatedAt(LocalDateTime.now());
+                user.setUpdatedAt(LocalDateTime.now());
+
+                _userRepository.save(user);
+
+                return new UserResponseModel(user.getUsername(), user.getEmail());
             }
             else
             {
-                return existUser;
+                return new UserResponseModel(existUser.getUsername(), existUser.getEmail());
             }
         }
         catch (Exception ex)
         {
-            return null;
+            throw new RuntimeException("Create User Error. ");
         }
-    }
-
-    private String generateSalt() {
-        SecureRandom secureRandom = new SecureRandom();
-        int SALT_LENGTH = 32;
-        byte[] salt = new byte[SALT_LENGTH];
-        secureRandom.nextBytes(salt);
-
-        // แปลง Salt ให้เป็น Base64 เพื่อให้เป็น String ที่สามารถใช้งานได้
-        return Base64.getEncoder().encodeToString(salt);
     }
 }

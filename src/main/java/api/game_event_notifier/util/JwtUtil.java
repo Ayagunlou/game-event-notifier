@@ -7,41 +7,63 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
 
-    private final String jwtSecret = "2370866dba370ac6d00fdb390951bbbeb3309d2fc2e491a9462e07f533e6900cf84971a264ae90a44f2b40e185b3903ac6a64afa8c002699953a032c53baeea58b0feb2ef2b40ae23663627c922209b38f5fdc2a2a73db00ae0d602e1352f67d086794a4e48ba18df6594074390e99604f67d345bb50f9e3bedfa1b18b436bc904c83a23115f2c0ca591227085e966eeb7daf8743d2961ab9f9c6bde13bbd2c594caca67e24e8764da44220e22b8532f482347941630e0cf45cb4bd5377b8007b2e5988efa4d30dd5de9405e83fd8de62cac6fb0a8b5a360965f9b257dfb74ff00711e30fe092209ac3db525ba7efd05dd0353f7e39135895b717368648ad797";
-    private final long jwtExpirationMs = 86400000; // 1 วัน
+    static JwtConfig jwtConfig = new JwtConfig();
+    private static final Algorithm accessTokenAlgorithm = Algorithm.HMAC256(jwtConfig.getSecret());
+    private static final Algorithm refreshTokenAlgorithm = Algorithm.HMAC256(jwtConfig.getSecretR());
+//    private static final Algorithm refreshTokenAlgorithm = Algorithm.RSA256(jwtConfig.getPublicKey(), jwtConfig.getPrivateKey());
 
-    private Algorithm getAlgorithm() {
-        return Algorithm.HMAC512(jwtSecret);
-    }
+    private static final long expireTimeAccess  = 15 * 60 * 1000; // 15 นาที
+    private static final long expireTimeRefresh  = 7 * 24 * 60 * 60 * 1000; // 7 วัน
 
-    public String generateToken(UserDetails userDetails) {
+    // สำหรับ AccessToken
+    public static String generateAccessToken(String subject) {
         return JWT.create()
-                .withSubject(userDetails.getUsername())
+                .withSubject(subject)
                 .withIssuedAt(new Date())
-                .withExpiresAt(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .sign(getAlgorithm());
+                .withExpiresAt(new Date(System.currentTimeMillis() + expireTimeAccess))
+                .sign(accessTokenAlgorithm);  // ใช้ HMAC256 สำหรับ AccessToken
     }
 
-    public String getUsernameFromToken(String token) {
-        DecodedJWT jwt = JWT.require(getAlgorithm())
-                .build()
-                .verify(token);
-        return jwt.getSubject();
+
+    // สำหรับ RefreshToken
+    public static String generateRefreshToken(String subject) {
+        return JWT.create()
+                .withSubject(subject)
+                .withClaim("origin", "Device")  // ข้อมูลเกี่ยวกับแพลตฟอร์มหรืออุปกรณ์
+                .withClaim("jti", UUID.randomUUID().toString())  // ใช้ jti เพื่อระบุ token ที่ไม่ซ้ำ
+                .withIssuedAt(new Date())
+                .withExpiresAt(new Date(System.currentTimeMillis() + expireTimeRefresh))
+                .sign(refreshTokenAlgorithm);  // ใช้ RSA256 สำหรับ RefreshToken
     }
 
-    public boolean validateJwtToken(String token) {
+    // สำหรับการ Verify AccessToken
+    public static DecodedJWT verifyAccessToken(String token) {
+        JWTVerifier verifier = JWT.require(accessTokenAlgorithm).build();
+        return verifier.verify(token); // ตรวจสอบ AccessToken ด้วย HMAC256
+    }
+
+    // สำหรับการ Verify RefreshToken
+    public static DecodedJWT verifyRefreshToken(String token) {
+        JWTVerifier verifier = JWT.require(refreshTokenAlgorithm).build();
+        return verifier.verify(token); // ตรวจสอบ RefreshToken ด้วย RSA256
+    }
+
+    public static boolean isRefreshTokenExpired(String token) {
         try {
-            JWTVerifier verifier = JWT.require(getAlgorithm()).build();
-            verifier.verify(token);
-            return true;
+            DecodedJWT decodedJWT = verifyRefreshToken(token);
+            Date expiration = decodedJWT.getExpiresAt();
+            return expiration.before(new Date()); // ถ้าวันหมดอายุก่อนเวลาปัจจุบัน แสดงว่าหมดอายุ
         } catch (Exception e) {
-            // e.g., TokenExpiredException, SignatureVerificationException
-            return false;
+            // ถ้าเกิดข้อผิดพลาด เช่น token ไม่ถูกต้อง หรือ verify ล้มเหลว ให้ถือว่าหมดอายุ
+            return true;
         }
     }
 }

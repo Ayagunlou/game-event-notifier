@@ -10,6 +10,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"users", "permissions"})
 public class Role {
 
     @Id

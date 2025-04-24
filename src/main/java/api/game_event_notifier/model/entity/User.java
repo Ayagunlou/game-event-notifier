@@ -10,6 +10,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"role", "tokens", "loginLogs", "sessions", "mfa", "loginAttempts", "auditLogs"})
+
 public class User {
 
     @Id
@@ -31,6 +33,9 @@ public class User {
 
     @Column(name = "is_verified", nullable = false)
     private Boolean isVerified;
+
+//    @Column(name = "role_id", nullable = false, insertable = false, updatable = false)
+//    private Integer roleId;
 
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
