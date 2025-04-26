@@ -2,7 +2,10 @@ package api.game_event_notifier.service.role;
 
 import api.game_event_notifier.model.entity.*;
 import api.game_event_notifier.model.request.*;
+import api.game_event_notifier.service.auth.AuthService;
 import api.game_event_notifier.service.repository.ServiceRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -16,6 +19,7 @@ public class CreateRoleService {
 
     private final ServiceRepository _serviceRepository;
     private final PlatformTransactionManager _transactionManager;
+    private static final Logger logger = LoggerFactory.getLogger(CreateRoleService.class);
 
     public CreateRoleService(ServiceRepository serviceRepository, PlatformTransactionManager transactionManager) {
         this._serviceRepository = serviceRepository;
@@ -25,7 +29,7 @@ public class CreateRoleService {
     public Role createRole(RoleRequestModel requestModel) {
 
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setName("CreateRowTx"); //ชื่อมีประโยชน์ตอน Debug หรือ Log — เวลาอยากรู้ว่า transaction ไหนกำลังทำงานอยู่
+        def.setName("CreateRoleTx"); //ชื่อมีประโยชน์ตอน Debug หรือ Log — เวลาอยากรู้ว่า transaction ไหนกำลังทำงานอยู่
         def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
 
         TransactionStatus status = _transactionManager.getTransaction(def);
@@ -54,6 +58,7 @@ public class CreateRoleService {
         catch (Exception ex)
         {
             _transactionManager.rollback(status);
+            logger.error(ex.getMessage(),ex);
             throw new RuntimeException("Create Role Fail. ");
         }
     }

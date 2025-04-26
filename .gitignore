@@ -4,6 +4,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 jwt-config.properties
+logs/
 
 ### STS ###
 .apt_generated

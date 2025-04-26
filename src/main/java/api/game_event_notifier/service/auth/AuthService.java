@@ -8,6 +8,7 @@ import api.game_event_notifier.util.JwtUtil;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.*;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,6 +16,7 @@ public class AuthService {
 
     private final SecurityService _securityService;
     private final ServiceRepository _serviceRepository;
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     public AuthService(SecurityService securityService, ServiceRepository serviceRepository) {
         this._securityService = securityService;
@@ -22,21 +24,32 @@ public class AuthService {
     }
 
     public AuthResponseModel authenticate(LoginRequestModel request) {
-        var user = _serviceRepository.getUser().findByUsername(request.getUsername());
+        try
+        {
+            var user = _serviceRepository.getUser().findByUsername(request.getUsername());
 
-        if (user == null){
-            throw new RuntimeException("Invalid username or password");
+            if (user == null){
+                throw new RuntimeException("Invalid username or password");
+            }
+
+            boolean isMatch = _securityService.checkPassword(request.getPassword(), user.getPasswordHash());
+            if (!isMatch) {
+                throw new RuntimeException("Invalid username or password");
+            }
+
+            String accessToken = JwtUtil.generateAccessToken(user.getUserId().toString());
+            String refreshToken = JwtUtil.generateRefreshToken(user.getUserId().toString());
+            logger.error("Test error");
+            logger.info("Test info");
+            logger.warn("Test warn");
+            logger.debug("Test debug");
+            return new AuthResponseModel(user.getUsername(), accessToken, refreshToken);
         }
-
-        boolean isMatch = _securityService.checkPassword(request.getPassword(), user.getPasswordHash());
-        if (!isMatch) {
-            throw new RuntimeException("Invalid username or password");
+        catch (Exception e)
+        {
+            logger.error(e.getMessage(),e);
+            throw new RuntimeException(e.getMessage());
         }
-
-        String accessToken = JwtUtil.generateAccessToken(user.getUserId().toString());
-        String refreshToken = JwtUtil.generateRefreshToken(user.getUserId().toString());
-
-        return new AuthResponseModel(user.getUsername(), accessToken, refreshToken);
     }
 
     public AuthResponseModel RefreshAccessToken(HttpServletRequest request) {

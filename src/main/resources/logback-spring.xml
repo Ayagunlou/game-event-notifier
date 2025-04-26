@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <property name="LOG_PATH" value="logs"/>
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"/>
+
+    <!-- Console Appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Rolling File Appender (แยกรายวัน) -->
+    <appender name="DAILY_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/application.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- ตั้งชื่อไฟล์แยกรายวัน -->
+            <fileNamePattern>${LOG_PATH}/application-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>14</maxHistory> <!-- เก็บ log ย้อนหลัง 14 วัน -->
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+        <!-- ตั้งระดับ log ที่นี่ -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+    </appender>
+
+    <!-- DB Appender เฉพาะ log ERROR -->
+    <appender name="CUSTOM_DB" class="api.game_event_notifier.config.ErrorLogDbAppender"/>
+
+    <!-- ใช้ทั้ง Console และ File -->
+    <root>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="DAILY_FILE"/>
+    </root>
+
+    <!-- ใช้ custom appender เฉพาะ error -->
+    <logger name="api.game_event_notifier" additivity="true">
+        <appender-ref ref="CUSTOM_DB"/>
+    </logger>
+
+</configuration>
